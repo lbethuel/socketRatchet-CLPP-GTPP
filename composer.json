@@ -1,0 +1,6 @@
+{
+    "require": {
+        "react/socket": "1.9.0",
+        "cboden/ratchet": "^0.4.3"
+    }
+}
