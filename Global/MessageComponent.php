@@ -98,7 +98,11 @@ class MessageComponent implements MessageComponentInterface
 
 
 
-
+      $Gtpp = new MessageComponentGtpp();
+      //$type is a variable to set specific configuration
+      //Type -1 connection status (login/logout)
+      //Type -2 all connection status (list of connected users)
+      //Type -3 message to a specific connection
 
       $Clpp = new MessageComponentCLPP();
 
@@ -108,6 +112,50 @@ class MessageComponent implements MessageComponentInterface
         $this->SetConnection($conn, $jsonBody);
         return;
       }
+
+
+
+
+
+      if ($jsonBody['aplication'] == 2 || $jsonBody['aplication'] == 3) {
+
+        if (!isset($jsonBody['type'])) {
+          echo "----------------------" . PHP_EOL;
+          echo "(type) is broken" . PHP_EOL;
+          echo "----------------------" . PHP_EOL;
+
+          $conn->send((string)json_encode(array("error" => true, "message" => "(type) is broken")));
+          return;
+        }
+
+
+        if($jsonBody === -2){
+         $user = $Gtpp->GetConnectedUsers($conn);
+
+         if ($user['error']) { //msg de erro
+          return;
+        }
+
+        $data = array(
+          'group_id'=> $jsonBody['group_id']
+        );
+      
+      }
+      
+      
+      
+      }
+
+
+
+
+
+
+
+
+
+
+
 
       if ($jsonBody['aplication'] == 13 || $jsonBody['aplication'] == 7) {
 
@@ -119,6 +167,49 @@ class MessageComponent implements MessageComponentInterface
           $conn->send((string)json_encode(array("error" => true, "message" => "(type) is broken")));
           return;
         }
+      
+
+        if ($jsonBody['type'] == 2) {
+          if (isset($jsonBody['group_id']) && !isset($jsonBody['send_id']) && isset($jsonBody['last_id'])){
+            
+            $user = $Clpp->GetUsersGroup($conn, $jsonBody['group_id']);
+
+            if ($user['error']) { //msg de erro
+              return;
+            }
+
+            $data = array(
+              'group_id'=> $jsonBody['data'],
+            );
+
+            $response = $Clpp->SendMessages($conn, $data, $jsonBody['last_id']);
+
+            if ($response['error']) {
+              echo "----------------------" . PHP_EOL;
+              echo $response['message'] . PHP_EOL;
+              echo "----------------------" . PHP_EOL;
+
+              $conn->send((string)json_encode(array(
+                "error" => true,
+                "message" => $response['message'],
+                "Notify" => "erro notification"
+              )));
+              return;
+            }
+
+            echo "----------------------" . PHP_EOL;
+            echo "notification group id" . $jsonBody['group_id'] . PHP_EOL;
+            echo $response['notify'] . PHP_EOL;
+            echo "----------------------" . PHP_EOL;
+
+            $conn->send((string)json_encode($response));
+
+            return;
+          }
+          }
+
+
+
 
         if ($jsonBody['type'] == 3) {
           if (isset($jsonBody['group_id']) && !isset($jsonBody['send_id'])) {
@@ -159,7 +250,52 @@ class MessageComponent implements MessageComponentInterface
             return;
           }
         }
+
+
+        if ($jsonBody['type'] == 4) {
+          if(isset($jsonBody['id_user']) && !isset($jsonBody['id_checklist'])){
+
+          $response = $Clpp->GetNotif($jsonBody['id_user'], $jsonBody['id_checklist']);
+  
+          if ($response['error']) {
+            return;
+          }
+
+          $data = array(
+            'id_user' => $jsonBody['id_user'],
+            'id_checklist' => $jsonBody['id_checklist']
+          );
+
+          $response = $Clpp->sendNotify($jsonBody['id_user'], $jsonBody['id_checklist']);
+
+          if ($response['error']) {
+            echo "----------------------" . PHP_EOL;
+            echo $response['message'] . PHP_EOL;
+            echo "----------------------" . PHP_EOL;
+
+            $conn->send((string)json_encode(array(
+              "error" => true,
+              "message" => $response['message'],
+              "Notify" => "erro notification"
+            )));
+            return;
+          }
+
+          echo "----------------------" . PHP_EOL;
+          echo "notification group id" . $jsonBody['group_id'] . PHP_EOL;
+          echo $response['notify'] . PHP_EOL;
+          echo "----------------------" . PHP_EOL;
+
+          $conn->send((string)json_encode($response));
+
+          return;
+        }
+
       }
+    }
+
+
+
     } catch (Exception $e) {
 
       echo "----------------------" . PHP_EOL;

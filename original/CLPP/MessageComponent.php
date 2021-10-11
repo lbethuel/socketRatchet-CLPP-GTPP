@@ -170,28 +170,30 @@ class MessageComponent implements MessageComponentInterface
 
 
 
-
-
-
       //modificado por Lucas Bethuel :(
       if ($jsonBody['type'] == 4) {
 
-        $response = $this->GetNotif($jsonBody['id_user'], $jsonBody['id_checklist']);
+        if (isset($jsonBody['id_user']) && !isset($jsonBody['id_checklist'])) {
 
-        if ($response['error']) {
+          $response = $this->GetNotif($jsonBody['id_user'], $jsonBody['id_checklist']);
+
+          if ($response['error']) {
+            return;
+          }
+
+          $data = array(
+            'id_user' => $jsonBody['id_user'],
+            'id_checklist' => $jsonBody['id_checklist']
+          );
+
+          $this->sendNotify($jsonBody['id_user'], $jsonBody['id_checklist']);
           return;
         }
       }
 
 
 
-
-
-
-
       
-
-
     } catch (Exception $e) {
       echo "----------------------" . PHP_EOL;
       echo "Error (onMessage): " . $e->getMessage() . PHP_EOL;
@@ -393,7 +395,7 @@ class MessageComponent implements MessageComponentInterface
     try {
       $daoMessage = new DaoMessage();
       $response  = $daoMessage->SelectLast($id);
-      
+
       // var_dump($response);
 
       if ($response['error']) {
@@ -426,9 +428,9 @@ class MessageComponent implements MessageComponentInterface
             ));
             $connection->send($complete_object);
             echo "----------------------" . PHP_EOL;
-            echo "user" .$this->connections[$connection]['id']. PHP_EOL;
-            echo "send_user" .$send_user_id. PHP_EOL;
-            echo "message ". $response['data'][0]->message . PHP_EOL;
+            echo "user" . $this->connections[$connection]['id'] . PHP_EOL;
+            echo "send_user" . $send_user_id . PHP_EOL;
+            echo "message " . $response['data'][0]->message . PHP_EOL;
             echo "----------------------" . PHP_EOL;
           }
         }
