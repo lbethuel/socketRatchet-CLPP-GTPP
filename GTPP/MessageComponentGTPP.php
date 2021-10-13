@@ -104,26 +104,25 @@ class MessageComponentGTPP
         }
     }
 
-    public function GetConnectedUsers($conn)
+    public function GetConnectedUsers($connection)
     {
-        try{
+        try {
             $userList = array();
 
             foreach ($this->connections as $connection) {
                 $user_id = (int)$this->connections[$connection]['id'];
-
-                array_push($userList, (int)$user_id);
+                return array_push($userList, (int)$user_id);
             }
 
-            $conn->send((string)json_encode(array(
-                "error" => false,
-                "user" => $userList,
-                "type" => -2
-            )));
-        }catch(Exception $e){
-            echo "----------------------" . PHP_EOL;
-            echo "Error (GetConnectedUsers): " . $e->getMessage() . PHP_EOL;
-            echo "----------------------" . PHP_EOL;
+            // $conn->send((string)json_encode(array(
+            //     "error" => false,
+            //     "user" => $userList,
+            //     "type" => -2
+            // )));
+        } catch (Exception $e) {
+            return array("error"=>true, "message"=>$e->getMessage());
+
+          
         }
     }
 

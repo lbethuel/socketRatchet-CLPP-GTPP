@@ -112,7 +112,7 @@ class MessageComponent implements MessageComponentInterface
         $this->SetConnection($conn, $jsonBody);
         return;
       }
-
+7
 
 
 
@@ -129,20 +129,49 @@ class MessageComponent implements MessageComponentInterface
         }
 
 
-        if($jsonBody === -2){
-         $user = $Gtpp->GetConnectedUsers($conn);
 
-         if ($user['error']) { //msg de erro
-          return;
+
+        
+        if($jsonBody['type']  == 2){
+         $user = $Gtpp->GetConnectedUsers($connection);
+
+         if ($user['error']) { 
+           //msg de erro
+           echo "----------------------" . PHP_EOL;
+            echo "Error (GetConnectedUsers): " . $user["message"] . PHP_EOL;
+            echo "----------------------" . PHP_EOL;
+           return;
         }
 
-        $data = array(
-          'group_id'=> $jsonBody['group_id']
-        );
-      
+        $conn->send((string)json_encode(array(
+          "error" => false,
+          "user" => $user,
+          "type" => -2
+      )));
       }
       
-      
+
+
+      if($jsonBody['type'] == 3){
+        $user = $Gtpp->SendMessageToUser($$connection);
+
+        if ($user['error']) { 
+          //msg de erro
+          echo "----------------------" . PHP_EOL;
+           echo "Error (GetConnectedUsers): " . $user["message"] . PHP_EOL;
+           echo "----------------------" . PHP_EOL;
+          return;
+       }
+
+       $conn->send((string)json_encode(array(
+        "error" => false,
+        "user_id" => $jsonBody['user_id'],
+        "send_user_id" => (int)$send_user_id,
+        "object" => $jsonBody['object'],
+        "task_id" => $jsonBody['task_id'],
+        "type" => $jsonBody['type'],
+    )));
+      }
       
       }
 

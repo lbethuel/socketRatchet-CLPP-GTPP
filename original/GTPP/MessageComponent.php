@@ -20,7 +20,8 @@ require_once 'vendor/autoload.php';
 //Type -2 all connection status (list of connected users)
 //Type -3 message to a specific connection
 
-class MessageComponent implements MessageComponentInterface{
+class MessageComponent implements MessageComponentInterface
+{
     //private SplObjectStorage $connections;
 
     public function __construct()
@@ -28,9 +29,9 @@ class MessageComponent implements MessageComponentInterface{
         system("clear");
         echo "----------------------" . PHP_EOL;
         echo "Initializing server..." . PHP_EOL;
-        try{
+        try {
             $this->connections = new SplObjectStorage();
-        }catch (Exception $e){
+        } catch (Exception $e) {
             echo "Error (__construct): " . $e->getMessage();
         }
         echo "----------------------" . PHP_EOL;
@@ -40,11 +41,11 @@ class MessageComponent implements MessageComponentInterface{
     {
         echo "----------------------" . PHP_EOL;
         echo "New connection..." . PHP_EOL;
-        try{
+        try {
             $this->connections->attach($conn);
             $count = $this->connections->count();
             echo "Count: " . $count . PHP_EOL;
-        }catch (Exception $e){
+        } catch (Exception $e) {
             echo "Error (onOpen): " . $e->getMessage();
         }
         echo "----------------------" . PHP_EOL;
@@ -54,21 +55,20 @@ class MessageComponent implements MessageComponentInterface{
     {
         echo "----------------------" . PHP_EOL;
         echo "End connection..." . PHP_EOL;
-        try{
+        try {
             $data = array(
                 "id" => $this->connections[$conn]['id'],
                 "user" => $this->connections[$conn]['user']
             );
 
             echo "User: " . $this->connections[$conn]['user'] . PHP_EOL;
-            
-            $this->NotifyConnectionState($data, "disconnected");
 
-        }catch (Exception $e){
+            $this->NotifyConnectionState($data, "disconnected");
+        } catch (Exception $e) {
             echo "Error (onClose): " . $e->getMessage() . PHP_EOL;
         }
         echo "----------------------" . PHP_EOL;
-        
+
         $this->connections->detach($conn);
         $count = $this->connections->count();
         echo "Count: " . $count . PHP_EOL;
@@ -92,7 +92,7 @@ class MessageComponent implements MessageComponentInterface{
                 return;
             }
 
-            if($msg == "__ping__"){
+            if ($msg == "__ping__") {
                 $conn->send((string)"__pong__");
                 return;
             }
@@ -104,19 +104,48 @@ class MessageComponent implements MessageComponentInterface{
                 return;
             }
 
+
+
+
+
+
+
+
+
+
             $type = $jsonBody['type'];
 
-            if($type === -2){
+            if ($type === 2) {
                 $this->GetConnectedUsers($conn);
                 return;
             }
 
-            if($type === -3){
+
+
+
+
+            if ($type === 3) {
                 $this->SendMessageToUser($conn, $jsonBody);
                 return;
             }
 
-            if(!isset($jsonBody['object']) || !isset($jsonBody['task_id']) || !isset($jsonBody['user_id'])){
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            if (!isset($jsonBody['object']) || !isset($jsonBody['task_id']) || !isset($jsonBody['user_id'])) {
                 echo "----------------------" . PHP_EOL;
                 echo "(object, task_id, user_id) is broken" . PHP_EOL;
                 echo "----------------------" . PHP_EOL;
@@ -128,15 +157,14 @@ class MessageComponent implements MessageComponentInterface{
             $task_id = $jsonBody['task_id'];
 
             $response = $this->GetTaskUsers($conn, $task_id);
-            if($response['error']){
-                echo "Error: " . $response['message'].PHP_EOL;
+            if ($response['error']) {
+                echo "Error: " . $response['message'] . PHP_EOL;
                 return;
             }
 
             $this->SendMessages($conn, $response, $object, $task_id, $type);
+        } catch (Exception $e) {
 
-        }catch (Exception $e){       
-            
             echo "----------------------" . PHP_EOL;
             echo "Error (onMessage): " . $e->getMessage() . PHP_EOL;
             echo "----------------------" . PHP_EOL;
@@ -150,7 +178,7 @@ class MessageComponent implements MessageComponentInterface{
 
     private function SetConnection($conn, $jsonBody)
     {
-        if(!isset($jsonBody['auth']) || !isset($jsonBody['app_id'])){
+        if (!isset($jsonBody['auth']) || !isset($jsonBody['app_id'])) {
             echo "----------------------" . PHP_EOL;
             echo "(auth, app_id) is broken" . PHP_EOL;
             echo "End connection..." . PHP_EOL;
@@ -170,7 +198,7 @@ class MessageComponent implements MessageComponentInterface{
         $response = $daoUser->SelectSession($auth, $app_id);
 
         if ($response['error']) {
-            if($response['message'] == "No data") {
+            if ($response['message'] == "No data") {
 
                 $conn->send((string)json_encode(array(
                     "error" => true,
@@ -203,8 +231,8 @@ class MessageComponent implements MessageComponentInterface{
         }
 
         //Verify if this user is connected
-        foreach ($this->connections as $connection){
-            if ($this->connections[$connection]['id'] == $response["data"][0]->id){
+        foreach ($this->connections as $connection) {
+            if ($this->connections[$connection]['id'] == $response["data"][0]->id) {
                 $connection->send((string)json_encode(array(
                     "error" => true,
                     "message" => "This user has been connected to another place"
@@ -263,12 +291,12 @@ class MessageComponent implements MessageComponentInterface{
 
     private function SendMessages($conn, $response, $object, $task_id, $type)
     {
-        try{
+        try {
 
-            $list = array();  
+            $list = array();
             foreach ($this->connections as $connection) {
                 //if ($connection !== $conn) {
- 
+
                 for ($i = 0; $i < count($response['data']); $i++) {
 
                     //echo "Response:".$response['data'][$i]->user_id.PHP_EOL;
@@ -287,7 +315,7 @@ class MessageComponent implements MessageComponentInterface{
                             "send_user_id" => (int)$send_user_id,
                             "object" => $object,
                             "task_id" => $task_id,
-                            "type"=>$type,
+                            "type" => $type,
                         ));
 
                         //echo $complete_object;
@@ -297,13 +325,13 @@ class MessageComponent implements MessageComponentInterface{
                     }
                 }
             }
-            
+
             $object = json_encode($object);
             $daoNotify = new DAONotify();
             $array = $response['data'];
 
-            for ($i = 0; $i < count($array); $i++){
-                if(!$this->getID((int)$array[$i]->user_id,$list)){
+            for ($i = 0; $i < count($array); $i++) {
+                if (!$this->getID((int)$array[$i]->user_id, $list)) {
 
                     $user_id = $array[$i]->user_id;
 
@@ -315,26 +343,26 @@ class MessageComponent implements MessageComponentInterface{
                         $type,
                         $object
                     );
-            
+
                     $response = $daoNotify->Insert($notify);
-            
-                    if($response['error']){
+
+                    if ($response['error']) {
                         echo "----------------------" . PHP_EOL;
-                        echo $response['message']. PHP_EOL;
+                        echo $response['message'] . PHP_EOL;
                         echo "----------------------" . PHP_EOL;
                         return;
                     }
                 }
             }
-
-        }catch (Exception $e){
+        } catch (Exception $e) {
             echo "----------------------" . PHP_EOL;
             echo "Error (SendMessages): " . $e->getMessage() . PHP_EOL;
             echo "----------------------" . PHP_EOL;
         }
     }
 
-    private function NotifyConnectionState($data, $state){
+    private function NotifyConnectionState($data, $state)
+    {
         foreach ($this->connections as $connection) {
             $connection->send((string)json_encode(array(
                 "error" => false,
@@ -345,33 +373,32 @@ class MessageComponent implements MessageComponentInterface{
         }
     }
 
-    private function GetConnectedUsers($conn)
+    private function GetConnectedUsers($connection)
     {
-        try{
+        try {
             $userList = array();
 
             foreach ($this->connections as $connection) {
                 $user_id = (int)$this->connections[$connection]['id'];
-
-                array_push($userList, (int)$user_id);
+                return array_push($userList, (int)$user_id);
             }
 
-            $conn->send((string)json_encode(array(
-                "error" => false,
-                "user" => $userList,
-                "type" => -2
-            )));
-        }catch(Exception $e){
-            echo "----------------------" . PHP_EOL;
-            echo "Error (GetConnectedUsers): " . $e->getMessage() . PHP_EOL;
-            echo "----------------------" . PHP_EOL;
+            // $conn->send((string)json_encode(array(
+            //     "error" => false,
+            //     "user" => $userList,
+            //     "type" => -2
+            // )));
+        } catch (Exception $e) {
+            return array("error"=>true, "message"=>$e->getMessage());
+
+          
         }
     }
 
     private function getID($id, $list): bool
     {
-        for ($j = 0; $j < count($list); $j++){
-            if($id === $list[$j]){
+        for ($j = 0; $j < count($list); $j++) {
+            if ($id === $list[$j]) {
                 return true;
             }
         }
@@ -386,18 +413,17 @@ class MessageComponent implements MessageComponentInterface{
             if ($jsonBody['user_id'] === $this->connections[$connection]['id']) {
                 $send_user_id = (int)$this->connections[$conn]['id'];
 
-                $complete_object = json_encode(array(
+                /* $complete_object = json_encode(array(
                     "error" => false,
                     "user_id" => $jsonBody['user_id'],
                     "send_user_id" => (int)$send_user_id,
                     "object" => $jsonBody['object'],
                     "task_id" => $jsonBody['task_id'],
-                    "type"=>$jsonBody['type'],
-                ));
+                    "type" => $jsonBody['type'],
+                )); */
 
-                $connection->send($complete_object);
+                $connection->send($send_user_id);
             }
         }
     }
-
 }
